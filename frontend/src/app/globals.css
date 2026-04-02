@@ -24,3 +24,37 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3 {
+  margin-top: 1.2rem;
+  margin-bottom: 0.6rem;
+  font-weight: 700;
+}
+
+.markdown-content p,
+.markdown-content ul,
+.markdown-content ol {
+  margin-bottom: 0.9rem;
+  line-height: 1.7;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  padding-left: 1.5rem;
+}
+
+.markdown-content code {
+  border-radius: 6px;
+  background: rgba(120, 120, 120, 0.16);
+  padding: 0.1rem 0.35rem;
+}
+
+.markdown-content pre {
+  overflow-x: auto;
+  border-radius: 12px;
+  background: #0f172a;
+  padding: 1rem;
+  color: #e2e8f0;
+}
