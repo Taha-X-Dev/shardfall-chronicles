@@ -95,9 +95,9 @@ function Ground() {
 }
 
 type LobbySceneProps = {
-  mouseSensitivity: number;
-  graphicsQuality: GraphicsQuality;
-  activeAction: string | null;
+  mouseSensitivity?: number;
+  graphicsQuality?: GraphicsQuality;
+  activeAction?: string | null;
 };
 
 const qualityPresets: Record<
@@ -155,9 +155,9 @@ const actionColors: Record<string, string> = {
 };
 
 export function LobbyScene({
-  mouseSensitivity,
-  graphicsQuality,
-  activeAction,
+  mouseSensitivity = 50,
+  graphicsQuality = "high",
+  activeAction = null,
 }: LobbySceneProps) {
   const normalizedSensitivity = Math.min(100, Math.max(1, mouseSensitivity));
   const rotateSpeed = 0.35 + normalizedSensitivity / 35;

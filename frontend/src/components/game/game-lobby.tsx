@@ -14,6 +14,15 @@ type LeaderboardPlayer = {
   experience: number;
 };
 
+type BackendPlayer = {
+  id: number;
+  name: string;
+  level?: number;
+  health?: number;
+  mana?: number;
+  coins?: number;
+};
+
 const tabs: { id: LobbyTab; label: string }[] = [
   { id: "single", label: "Single Player" },
   { id: "multi", label: "Multiplayer" },
@@ -22,11 +31,22 @@ const tabs: { id: LobbyTab; label: string }[] = [
 
 const graphicsOptions: GraphicsQuality[] = ["low", "medium", "high", "ultra"];
 
+const toNumberOrUndefined = (value: unknown) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+};
+
 export function GameLobby() {
   const [activeTab, setActiveTab] = useState<LobbyTab>("single");
   const [backendStatus, setBackendStatus] = useState("Checking backend...");
   const [leaderboard, setLeaderboard] = useState<LeaderboardPlayer[]>([]);
   const [selectedClass, setSelectedClass] = useState(classes[0].id);
+  const [activePlayer, setActivePlayer] = useState<BackendPlayer | null>(null);
+  const [players, setPlayers] = useState<BackendPlayer[]>([]);
+  const [playersLoading, setPlayersLoading] = useState(false);
+  const [playersError, setPlayersError] = useState<string | null>(null);
+  const [isPlayerModalOpen, setIsPlayerModalOpen] = useState(false);
+  const [pendingPlayerId, setPendingPlayerId] = useState<number | null>(null);
   const [newActionName, setNewActionName] = useState("");
   const [newActionKey, setNewActionKey] = useState("");
   const [lastTriggeredAction, setLastTriggeredAction] = useState<string | null>(null);
@@ -80,6 +100,57 @@ export function GameLobby() {
     };
   }, [apiBaseUrl]);
 
+  const loadPlayersFromBackend = async () => {
+    setPlayersLoading(true);
+    setPlayersError(null);
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/players`);
+      if (!response.ok) {
+        setPlayersError("Could not load players from backend.");
+        return;
+      }
+
+      const raw = (await response.json()) as Array<Record<string, unknown>>;
+      const normalized: BackendPlayer[] = raw
+        .map((item) => ({
+          id: toNumberOrUndefined(item.id) ?? -1,
+          name: String(item.name ?? "").trim() || "Unknown",
+          level: toNumberOrUndefined(item.level),
+          health: toNumberOrUndefined(item.health),
+          mana: toNumberOrUndefined(item.mana),
+          coins: toNumberOrUndefined(item.coins),
+        }))
+        .filter((item) => item.id > 0);
+
+      setPlayers(normalized);
+      if (!normalized.length) {
+        setPlayersError("No players found in database.");
+      }
+
+      const defaultSelection = activePlayer?.id ?? normalized[0]?.id ?? null;
+      setPendingPlayerId(defaultSelection);
+    } catch {
+      setPlayersError("Could not connect to backend.");
+    } finally {
+      setPlayersLoading(false);
+    }
+  };
+
+  const openPlayerModal = () => {
+    setIsPlayerModalOpen(true);
+    void loadPlayersFromBackend();
+  };
+
+  const confirmPlayerSelection = () => {
+    if (!pendingPlayerId) return;
+    const pickedPlayer = players.find((item) => item.id === pendingPlayerId);
+    if (!pickedPlayer) return;
+
+    setActivePlayer(pickedPlayer);
+    setIsPlayerModalOpen(false);
+  };
+
   useEffect(() => {
     const normalizePressedKey = (key: string) => {
       if (key === " ") return "SPACE";
@@ -118,10 +189,12 @@ export function GameLobby() {
   };
 
   const toDisplayAction = (action: string) => action.replace(/_/g, " ");
+  const pendingPlayer = players.find((item) => item.id === pendingPlayerId) || null;
 
   return (
-    <main className="min-h-screen w-full bg-[radial-gradient(circle_at_15%_20%,#0f172a,transparent_45%),radial-gradient(circle_at_85%_10%,#082f49,transparent_40%),linear-gradient(180deg,#020617,#020617)] px-4 py-6 text-zinc-100 md:px-8">
-      <div className="mx-auto grid w-full max-w-7xl gap-6 lg:grid-cols-[1.55fr_1fr] lg:items-start">
+    <>
+      <main className="min-h-screen w-full bg-[radial-gradient(circle_at_15%_20%,#0f172a,transparent_45%),radial-gradient(circle_at_85%_10%,#082f49,transparent_40%),linear-gradient(180deg,#020617,#020617)] px-4 py-6 text-zinc-100 md:px-8">
+        <div className="mx-auto grid w-full max-w-7xl gap-6 lg:grid-cols-[1.55fr_1fr] lg:items-start">
         <section className="h-fit space-y-4 rounded-3xl border border-cyan-200/20 bg-black/35 p-5 backdrop-blur-sm">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -196,8 +269,21 @@ export function GameLobby() {
                 </div>
               </div>
 
+              <div className="rounded-xl border border-cyan-300/30 bg-cyan-950/20 p-3">
+                <p className="text-xs uppercase tracking-wide text-cyan-300">Active Player</p>
+                <p className="mt-1 text-sm font-semibold">
+                  {activePlayer ? activePlayer.name : "Not selected"}
+                </p>
+                <p className="mt-1 text-xs text-zinc-300">
+                  {activePlayer
+                    ? `Level ${activePlayer.level ?? "-"} • Health ${activePlayer.health ?? "-"} • Mana ${activePlayer.mana ?? "-"}`
+                    : "Click Start Adventure to choose from backend players."}
+                </p>
+              </div>
+
               <button
                 type="button"
+                onClick={openPlayerModal}
                 className="w-full rounded-xl bg-cyan-300 px-4 py-3 text-sm font-black text-slate-950 transition hover:bg-cyan-200"
               >
                 Start Adventure
@@ -345,6 +431,88 @@ export function GameLobby() {
           ) : null}
         </aside>
       </div>
-    </main>
+      </main>
+
+      {isPlayerModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-2xl rounded-3xl border border-cyan-300/25 bg-slate-950/95 p-5 shadow-[0_25px_80px_-20px_rgba(34,211,238,0.45)]">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.22em] text-cyan-300">
+                  Choose Player
+                </p>
+                <h3 className="mt-1 text-xl font-black">
+                  Select Your Hero From Backend
+                </h3>
+                <p className="mt-1 text-xs text-zinc-300">
+                  Pulled from `/api/players` (for example: taha, mustafa, weakguy).
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsPlayerModalOpen(false)}
+                className="rounded-lg border border-zinc-700 px-3 py-1 text-xs font-semibold text-zinc-300 transition hover:border-zinc-500"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mt-4 rounded-2xl border border-zinc-800 bg-zinc-950/70 p-3">
+              {playersLoading ? (
+                <p className="text-sm text-zinc-300">Loading players...</p>
+              ) : null}
+
+              {playersError && !playersLoading ? (
+                <p className="text-sm text-rose-300">{playersError}</p>
+              ) : null}
+
+              {!playersLoading && !playersError ? (
+                <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
+                  {players.map((player) => (
+                    <button
+                      key={player.id}
+                      type="button"
+                      onClick={() => setPendingPlayerId(player.id)}
+                      className={`w-full rounded-xl border p-3 text-left transition ${
+                        pendingPlayerId === player.id
+                          ? "border-cyan-300 bg-cyan-600/20"
+                          : "border-zinc-700 bg-zinc-900/50 hover:border-zinc-500"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-bold">{player.name}</p>
+                        <span className="text-xs text-cyan-300">ID {player.id}</span>
+                      </div>
+                      <p className="mt-1 text-xs text-zinc-300">
+                        Level {player.level ?? "-"} • Health {player.health ?? "-"} • Mana{" "}
+                        {player.mana ?? "-"} • Coins {player.coins ?? "-"}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+              <p className="text-xs text-zinc-300">
+                Selected:{" "}
+                <span className="font-semibold text-cyan-300">
+                  {pendingPlayer ? pendingPlayer.name : "none"}
+                </span>
+              </p>
+
+              <button
+                type="button"
+                onClick={confirmPlayerSelection}
+                disabled={!pendingPlayer || playersLoading}
+                className="rounded-xl bg-cyan-300 px-4 py-2 text-sm font-black text-slate-950 transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Confirm Player
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </>
   );
 }
