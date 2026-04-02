@@ -24,14 +24,14 @@
     "rehype-highlight": "^7.0.2",
     "remark-gfm": "^4.0.1",
     "socket.io-client": "^4.8.3",
-    "three": "^0.183.2",
+    "three": "0.182.0",
     "@tailwindcss/postcss": "^4.1.12",
     "zod": "^4.3.6",
     "zustand": "^5.0.12"
   },
   "devDependencies": {
     "@types/node": "25.5.0",
-    "@types/three": "^0.183.1",
+    "@types/three": "0.182.0",
     "typescript": "6.0.2"
   }
 }

@@ -4,6 +4,7 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { Environment, Float, OrbitControls, Sparkles, Stars } from "@react-three/drei";
 import { Bloom, EffectComposer } from "@react-three/postprocessing";
 import { useMemo, useRef } from "react";
+import { PCFShadowMap } from "three";
 import type * as THREE from "three";
 import type { GraphicsQuality } from "@/store/game-settings";
 
@@ -171,7 +172,7 @@ export function LobbyScene({
     <div className="h-[440px] w-full overflow-hidden rounded-3xl border border-cyan-300/30 bg-gradient-to-b from-slate-900 via-slate-950 to-black shadow-[0_0_80px_-28px_rgba(34,211,238,0.8)]">
       <Canvas
         dpr={quality.dpr}
-        shadows={quality.enableShadows}
+        shadows={quality.enableShadows ? { type: PCFShadowMap } : false}
         camera={{ position: [0, 1.35, 5.1], fov: 48 }}
       >
         <color attach="background" args={["#020617"]} />

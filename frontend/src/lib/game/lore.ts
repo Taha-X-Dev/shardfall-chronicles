@@ -13,6 +13,14 @@ export type HeroClass = {
   style: string;
 };
 
+export type WorldMap = {
+  id: string;
+  name: string;
+  vibe: string;
+  challenge: string;
+  objective: string;
+};
+
 export const gameName = "Shardfall Chronicles";
 
 export const gameIntro =
@@ -76,5 +84,36 @@ export const classes: HeroClass[] = [
     id: "ranger",
     name: "Ranger",
     style: "Mobile striker with precision shots",
+  },
+];
+
+export const worldMaps: WorldMap[] = [
+  {
+    id: "ember_caverns",
+    name: "Ember Caverns",
+    vibe: "Volcanic tunnels, lava glow, scorched stone.",
+    challenge: "High enemy pressure and close-range fights.",
+    objective: "Push into the furnace gate and clear all elites.",
+  },
+  {
+    id: "weeping_wilds",
+    name: "Weeping Wilds",
+    vibe: "Foggy forests, corrupted ponds, thorn roots.",
+    challenge: "Wide map with ambush routes and flanking mobs.",
+    objective: "Cleanse the wild core and hold the shrine.",
+  },
+  {
+    id: "stormwreck_coast",
+    name: "Stormwreck Coast",
+    vibe: "Cold shoreline, dark water, lightning sky.",
+    challenge: "Medium pressure with visibility disruption.",
+    objective: "Secure the lighthouse path and break the storm sigil.",
+  },
+  {
+    id: "mirror_spire",
+    name: "Mirror Spire",
+    vibe: "Arcane ruins, reflective crystal ground.",
+    challenge: "Hard elites with stronger scaling defense.",
+    objective: "Reach the spire chamber and seal the echo rift.",
   },
 ];
