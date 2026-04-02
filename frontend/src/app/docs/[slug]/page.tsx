@@ -1,8 +1,5 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import rehypeHighlight from "rehype-highlight";
 import { getDocBySlug, getDocsList } from "@/lib/docs";
 
 type Params = {
@@ -39,13 +36,10 @@ export default async function DocDetailPage({
           </p>
         ) : null}
 
-        <article className="markdown-content mt-8 max-w-none">
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            rehypePlugins={[rehypeHighlight]}
-          >
+        <article className="mt-8 overflow-x-auto rounded-2xl border border-zinc-700 bg-zinc-950/70 p-4">
+          <pre className="whitespace-pre-wrap text-sm leading-7 text-zinc-100">
             {doc.content}
-          </ReactMarkdown>
+          </pre>
         </article>
       </main>
     );
