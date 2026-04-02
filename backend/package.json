@@ -19,7 +19,9 @@
     "inquirer": "^13.2.4",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.1.0",
-    "pg": "^8.20.0"
+    "pg": "^8.20.0",
+    "swagger-ui-express": "^5.0.1",
+    "yamljs": "^0.3.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"

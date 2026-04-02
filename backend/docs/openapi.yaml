@@ -1,0 +1,284 @@
+openapi: 3.0.3
+info:
+  title: Game Backend API
+  version: 1.0.0
+  description: API documentation for the game backend.
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+
+tags:
+  - name: Health
+  - name: Auth
+  - name: Derived
+  - name: Gameplay
+  - name: Upload
+
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Check server status
+      responses:
+        '200':
+          description: Server is running
+  /db_health:
+    get:
+      tags: [Health]
+      summary: Check database connection
+      responses:
+        '200':
+          description: Database is active
+
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '201':
+          description: Registered successfully
+        '409':
+          description: Username already exists
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login and receive JWT token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+        '401':
+          description: Invalid credentials
+
+  /api/leaderboard:
+    get:
+      tags: [Derived]
+      summary: Get leaderboard
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: Leaderboard data
+
+  /api/players/{id}/summary:
+    get:
+      tags: [Derived]
+      summary: Get full player summary
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Player summary
+        '401':
+          description: Unauthorized
+        '403':
+          description: Access denied
+
+  /api/shops/{id}/inventory:
+    get:
+      tags: [Derived]
+      summary: Get shop inventory
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Shop inventory
+
+  /game/players/{id}/battle:
+    post:
+      tags: [Gameplay]
+      summary: Resolve a battle against enemy or boss
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                enemy_id:
+                  type: integer
+                boss_id:
+                  type: integer
+      responses:
+        '200':
+          description: Battle resolved
+
+  /game/quests/{id}/complete:
+    post:
+      tags: [Gameplay]
+      summary: Complete a quest for a player
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [player_id]
+              properties:
+                player_id:
+                  type: integer
+      responses:
+        '200':
+          description: Quest completed
+
+  /game/shops/{id}/purchase:
+    post:
+      tags: [Gameplay]
+      summary: Buy an item from shop
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [player_id, item_id]
+              properties:
+                player_id:
+                  type: integer
+                item_id:
+                  type: integer
+                quantity:
+                  type: integer
+                  default: 1
+      responses:
+        '200':
+          description: Purchase successful
+
+  /game/shops/{id}/sell:
+    post:
+      tags: [Gameplay]
+      summary: Sell an item to shop
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [player_id, item_id]
+              properties:
+                player_id:
+                  type: integer
+                item_id:
+                  type: integer
+                quantity:
+                  type: integer
+                  default: 1
+      responses:
+        '200':
+          description: Sell successful
+
+  /game/craft:
+    post:
+      tags: [Gameplay]
+      summary: Craft an item from recipe
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [player_id, recipe_id]
+              properties:
+                player_id:
+                  type: integer
+                recipe_id:
+                  type: integer
+      responses:
+        '200':
+          description: Crafting successful
+
+  /upload/image:
+    post:
+      tags: [Upload]
+      summary: Upload an image
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Image uploaded
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
